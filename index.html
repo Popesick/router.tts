@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Router Einrichtungshilfe</title>
+</head>
+<body>
+  <h2>WLAN-Passwort</h2>
+  <p id="original"></p>
+  <p id="spoken"></p>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const text = params.get("text") || "";
+
+    const mapping = {
+      "!": "Ausrufezeichen", "@": "At-Zeichen", "#": "Raute", "$": "Dollarzeichen",
+      "%": "Prozentzeichen", "&": "Und-Zeichen", "*": "Stern", "+": "Pluszeichen",
+      "-": "Bindestrich", "_": "Unterstrich", "=": "Gleichheitszeichen"
+    };
+
+    function spellOut(text) {
+      return [...text].map(char => {
+        if (/[A-Z]/.test(char)) return "großes " + char;
+        if (/[a-z]/.test(char)) return "kleines " + char;
+        if (/[0-9]/.test(char)) return char;
+        if (mapping[char]) return mapping[char];
+        return "Sonderzeichen " + char;
+      }).join(", ");
+    }
+
+    const introduction = `So richtest du deinen Router im Browser ein:
+1. Melde dich mit dem Benutzernamen und Passwort an oder lege ein neues Passwort fest.
+2. Wenn vorhanden, starte nun den Einrichtungsassistenten deines Routers.
+3. Gib folgendes Passwort ein: `;
+
+    document.getElementById("original").innerText = "Original: " + text;
+
+    const spokenText = spellOut(text);
+    document.getElementById("spoken").innerText = "Wird vorgelesen: " + introduction + spokenText;
+
+    // Funktion für sequentielles Vorlesen
+    function speakSequentially(texts, lang = "de-DE", index = 0) {
+      if (index >= texts.length) return; // alle Texte gelesen
+
+      const utterance = new SpeechSynthesisUtterance(texts[index]);
+      utterance.lang = lang;
+      utterance.onend = () => {
+        speakSequentially(texts, lang, index + 1);
+      };
+      speechSynthesis.speak(utterance);
+    }
+
+    // Erst Einleitung, dann Passwort buchstabiert vorlesen
+    speakSequentially([introduction, spokenText]);
+  </script>
+</body>
+</html>
